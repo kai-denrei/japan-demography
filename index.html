@@ -163,6 +163,7 @@
     <a data-tab="crime">Crime</a>
     <a data-tab="tourism">Tourism</a>
     <a data-tab="economy">Economy</a>
+    <a data-tab="realestate">Real Estate</a>
   </nav>
 
   <!-- HOME -->
@@ -250,6 +251,14 @@
     <div id="economy-viz"><div class="loading-indicator">Loading visualization...</div></div>
   </div>
 
+  <div id="realestate" class="tab-panel" data-viz-src="sections/08-realestate/viz.js">
+    <div class="section-header">
+      <h2 class="section-title">Real Estate Market</h2>
+      <p class="section-subtitle">Land prices, rents, vacancy, and the bubble-to-recovery arc — by prefecture and Tokyo ward</p>
+    </div>
+    <div id="realestate-viz"><div class="loading-indicator">Loading visualization...</div></div>
+  </div>
+
   <!-- Shared utilities -->
   <script src="js/utils.js"></script>
   <script>
@@ -262,6 +271,7 @@
         { id: "crime", title: "Crime Statistics", desc: "NPA arrest data by nationality and prefecture, with per-capita rates" },
         { id: "tourism", title: "Tourism", desc: "60 years of inbound visitors — by country and by prefecture" },
         { id: "economy", title: "Economy", desc: "GDP, wages, and minimum wage by prefecture — with live FX conversion" },
+        { id: "realestate", title: "Real Estate", desc: "Land prices, rents, vacancy rates, Tokyo wards — bubble to recovery with FX toggle" },
       ];
 
       // Build section cards on home

@@ -1,0 +1,531 @@
+{
+  "metadata": {
+    "title": "Tokyo 23 Special Wards Real Estate Data",
+    "description": "Comprehensive ward-level real estate data for Tokyo's 23 special wards (特別区)",
+    "data_year": "2026",
+    "compiled_date": "2026-04-15",
+    "sources": {
+      "land_prices": {
+        "name": "tochidai.info (based on MLIT 国土交通省 公示地価)",
+        "url": "https://tochidai.info/tokyo/",
+        "year": "2026 (令和8年)",
+        "note": "Official government land price survey (地価公示) aggregated by ward"
+      },
+      "population": {
+        "name": "Tokyo Metropolitan Government Statistics (東京都の統計)",
+        "url": "https://www.toukei.metro.tokyo.lg.jp/juukiy/jy-index.htm",
+        "year": "2026 (令和8年1月1日現在)",
+        "note": "Based on Basic Resident Register (住民基本台帳)"
+      },
+      "rents": {
+        "name": "SUUMO (リクルート)",
+        "url": "https://suumo.jp/chintai/soba/tokyo/",
+        "year": "Updated April 2026",
+        "note": "Average rents based on active listings. Amounts in 万円 (10,000 yen units)"
+      },
+      "resale_condo_prices": {
+        "name": "LIFULL HOME'S (ホームズ)",
+        "url": "https://www.homes.co.jp/mansion/chuko/tokyo/city/price/",
+        "year": "April 2026",
+        "note": "Average resale condo price for 70m² unit based on 3-month listing data. Amounts in 万円 (10,000 yen units = millions)"
+      },
+      "area": {
+        "name": "Wikipedia / National Land Information (国土地理院)",
+        "note": "Official ward area figures in km²"
+      }
+    },
+    "column_definitions": {
+      "avg_land_price_yen_m2": "Overall average land price (residential + commercial + industrial) per m² in yen",
+      "residential_land_price_yen_m2": "Average residential zone (住宅地) land price per m² in yen",
+      "commercial_land_price_yen_m2": "Average commercial zone (商業地) land price per m² in yen",
+      "land_price_yoy_change_pct": "Year-over-year change in overall average land price (%)",
+      "resale_condo_70m2_million_yen": "Average resale condo price for a 70m² unit in million yen (百万円)",
+      "rent_*_man_yen": "Average monthly rent in 万円 (10,000 yen). E.g., 11.0 = ¥110,000/month"
+    }
+  },
+  "wards": [
+    {
+      "ward_ja": "千代田区",
+      "ward_en": "Chiyoda",
+      "population": 69139,
+      "households": 39737,
+      "area_km2": 11.66,
+      "pop_density_per_km2": 5930,
+      "land_prices": {
+        "overall_avg_yen_m2": 6914576,
+        "residential_yen_m2": 3631428,
+        "commercial_yen_m2": 7356538,
+        "yoy_change_pct": 12.76
+      },
+      "resale_condo_70m2_million_yen": 188.82,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 11.0,
+        "1LDK_2K_2DK": 11.6,
+        "2LDK_3K_3DK": 19.2,
+        "3LDK_4K_plus": 30.3
+      }
+    },
+    {
+      "ward_ja": "中央区",
+      "ward_en": "Chuo",
+      "population": 191015,
+      "households": 108424,
+      "area_km2": 10.21,
+      "pop_density_per_km2": 18709,
+      "land_prices": {
+        "overall_avg_yen_m2": 10034603,
+        "residential_yen_m2": 1930000,
+        "commercial_yen_m2": 11385370,
+        "yoy_change_pct": 13.51
+      },
+      "resale_condo_70m2_million_yen": 153.27,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 10.7,
+        "1LDK_2K_2DK": 11.0,
+        "2LDK_3K_3DK": 18.8,
+        "3LDK_4K_plus": 26.9
+      }
+    },
+    {
+      "ward_ja": "港区",
+      "ward_en": "Minato",
+      "population": 269877,
+      "households": 155262,
+      "area_km2": 20.36,
+      "pop_density_per_km2": 13255,
+      "land_prices": {
+        "overall_avg_yen_m2": 5518395,
+        "residential_yen_m2": 3013666,
+        "commercial_yen_m2": 6991764,
+        "yoy_change_pct": 14.99
+      },
+      "resale_condo_70m2_million_yen": 170.03,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 11.7,
+        "1LDK_2K_2DK": 11.8,
+        "2LDK_3K_3DK": 22.9,
+        "3LDK_4K_plus": 36.4
+      }
+    },
+    {
+      "ward_ja": "新宿区",
+      "ward_en": "Shinjuku",
+      "population": 355125,
+      "households": 234374,
+      "area_km2": 18.22,
+      "pop_density_per_km2": 19491,
+      "land_prices": {
+        "overall_avg_yen_m2": 4331090,
+        "residential_yen_m2": 1131571,
+        "commercial_yen_m2": 6159387,
+        "yoy_change_pct": 12.88
+      },
+      "resale_condo_70m2_million_yen": 99.30,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 8.5,
+        "1LDK_2K_2DK": 10.5,
+        "2LDK_3K_3DK": 16.9,
+        "3LDK_4K_plus": 26.2
+      }
+    },
+    {
+      "ward_ja": "文京区",
+      "ward_en": "Bunkyo",
+      "population": 236981,
+      "households": 132456,
+      "area_km2": 11.29,
+      "pop_density_per_km2": 20990,
+      "land_prices": {
+        "overall_avg_yen_m2": 1895320,
+        "residential_yen_m2": 1448086,
+        "commercial_yen_m2": 2276296,
+        "yoy_change_pct": 16.03
+      },
+      "resale_condo_70m2_million_yen": 95.89,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 8.0,
+        "1LDK_2K_2DK": 9.2,
+        "2LDK_3K_3DK": 16.3,
+        "3LDK_4K_plus": 23.3
+      }
+    },
+    {
+      "ward_ja": "台東区",
+      "ward_en": "Taito",
+      "population": 217512,
+      "households": 138606,
+      "area_km2": 10.11,
+      "pop_density_per_km2": 21515,
+      "land_prices": {
+        "overall_avg_yen_m2": 2377924,
+        "residential_yen_m2": 1320833,
+        "commercial_yen_m2": 2512872,
+        "yoy_change_pct": 18.50
+      },
+      "resale_condo_70m2_million_yen": 88.24,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 8.5,
+        "1LDK_2K_2DK": 10.2,
+        "2LDK_3K_3DK": 15.4,
+        "3LDK_4K_plus": 21.1
+      }
+    },
+    {
+      "ward_ja": "墨田区",
+      "ward_en": "Sumida",
+      "population": 288833,
+      "households": 171985,
+      "area_km2": 13.77,
+      "pop_density_per_km2": 20976,
+      "land_prices": {
+        "overall_avg_yen_m2": 933208,
+        "residential_yen_m2": 613272,
+        "commercial_yen_m2": 1203923,
+        "yoy_change_pct": 14.17
+      },
+      "resale_condo_70m2_million_yen": 68.64,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 8.4,
+        "1LDK_2K_2DK": 9.2,
+        "2LDK_3K_3DK": 14.6,
+        "3LDK_4K_plus": 19.7
+      }
+    },
+    {
+      "ward_ja": "江東区",
+      "ward_en": "Koto",
+      "population": 543193,
+      "households": 297147,
+      "area_km2": 42.99,
+      "pop_density_per_km2": 12635,
+      "land_prices": {
+        "overall_avg_yen_m2": 897425,
+        "residential_yen_m2": 661538,
+        "commercial_yen_m2": 1310294,
+        "yoy_change_pct": 13.47
+      },
+      "resale_condo_70m2_million_yen": 76.57,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 8.6,
+        "1LDK_2K_2DK": 9.7,
+        "2LDK_3K_3DK": 13.7,
+        "3LDK_4K_plus": 21.0
+      }
+    },
+    {
+      "ward_ja": "品川区",
+      "ward_en": "Shinagawa",
+      "population": 415644,
+      "households": 240687,
+      "area_km2": 22.85,
+      "pop_density_per_km2": 18190,
+      "land_prices": {
+        "overall_avg_yen_m2": 1814525,
+        "residential_yen_m2": 1244066,
+        "commercial_yen_m2": 2470357,
+        "yoy_change_pct": 15.00
+      },
+      "resale_condo_70m2_million_yen": 81.68,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 8.4,
+        "1LDK_2K_2DK": 9.4,
+        "2LDK_3K_3DK": 16.0,
+        "3LDK_4K_plus": 22.9
+      }
+    },
+    {
+      "ward_ja": "目黒区",
+      "ward_en": "Meguro",
+      "population": 282607,
+      "households": 162902,
+      "area_km2": 14.67,
+      "pop_density_per_km2": 19264,
+      "land_prices": {
+        "overall_avg_yen_m2": 1841734,
+        "residential_yen_m2": 1404531,
+        "commercial_yen_m2": 2664705,
+        "yoy_change_pct": 13.68
+      },
+      "resale_condo_70m2_million_yen": 90.33,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 8.8,
+        "1LDK_2K_2DK": 10.0,
+        "2LDK_3K_3DK": 16.8,
+        "3LDK_4K_plus": 26.0
+      }
+    },
+    {
+      "ward_ja": "大田区",
+      "ward_en": "Ota",
+      "population": 745048,
+      "households": 424146,
+      "area_km2": 61.86,
+      "pop_density_per_km2": 12044,
+      "land_prices": {
+        "overall_avg_yen_m2": 849697,
+        "residential_yen_m2": 647581,
+        "commercial_yen_m2": 1201694,
+        "yoy_change_pct": 8.76
+      },
+      "resale_condo_70m2_million_yen": 58.52,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 7.2,
+        "1LDK_2K_2DK": 8.4,
+        "2LDK_3K_3DK": 12.5,
+        "3LDK_4K_plus": 16.9
+      }
+    },
+    {
+      "ward_ja": "世田谷区",
+      "ward_en": "Setagaya",
+      "population": 928666,
+      "households": 508002,
+      "area_km2": 58.05,
+      "pop_density_per_km2": 15998,
+      "land_prices": {
+        "overall_avg_yen_m2": 905808,
+        "residential_yen_m2": 779853,
+        "commercial_yen_m2": 1334843,
+        "yoy_change_pct": 7.58
+      },
+      "resale_condo_70m2_million_yen": 77.72,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 7.3,
+        "1LDK_2K_2DK": 8.8,
+        "2LDK_3K_3DK": 14.3,
+        "3LDK_4K_plus": 19.4
+      }
+    },
+    {
+      "ward_ja": "渋谷区",
+      "ward_en": "Shibuya",
+      "population": 230880,
+      "households": 143708,
+      "area_km2": 15.11,
+      "pop_density_per_km2": 15280,
+      "land_prices": {
+        "overall_avg_yen_m2": 6097793,
+        "residential_yen_m2": 1874080,
+        "commercial_yen_m2": 9297575,
+        "yoy_change_pct": 12.54
+      },
+      "resale_condo_70m2_million_yen": 144.82,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 10.0,
+        "1LDK_2K_2DK": 10.8,
+        "2LDK_3K_3DK": 19.7,
+        "3LDK_4K_plus": 31.0
+      }
+    },
+    {
+      "ward_ja": "中野区",
+      "ward_en": "Nakano",
+      "population": 343794,
+      "households": 220969,
+      "area_km2": 15.59,
+      "pop_density_per_km2": 22052,
+      "land_prices": {
+        "overall_avg_yen_m2": 1371980,
+        "residential_yen_m2": 782703,
+        "commercial_yen_m2": 2034916,
+        "yoy_change_pct": 13.07
+      },
+      "resale_condo_70m2_million_yen": 84.29,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 7.2,
+        "1LDK_2K_2DK": 8.9,
+        "2LDK_3K_3DK": 13.6,
+        "3LDK_4K_plus": 19.1
+      }
+    },
+    {
+      "ward_ja": "杉並区",
+      "ward_en": "Suginami",
+      "population": 582636,
+      "households": 339208,
+      "area_km2": 34.06,
+      "pop_density_per_km2": 17106,
+      "land_prices": {
+        "overall_avg_yen_m2": 930151,
+        "residential_yen_m2": 703177,
+        "commercial_yen_m2": 1516500,
+        "yoy_change_pct": 10.82
+      },
+      "resale_condo_70m2_million_yen": 64.03,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 6.9,
+        "1LDK_2K_2DK": 8.3,
+        "2LDK_3K_3DK": 13.0,
+        "3LDK_4K_plus": 17.5
+      }
+    },
+    {
+      "ward_ja": "豊島区",
+      "ward_en": "Toshima",
+      "population": 296129,
+      "households": 189882,
+      "area_km2": 13.01,
+      "pop_density_per_km2": 22762,
+      "land_prices": {
+        "overall_avg_yen_m2": 2206666,
+        "residential_yen_m2": 912130,
+        "commercial_yen_m2": 3167129,
+        "yoy_change_pct": 14.27
+      },
+      "resale_condo_70m2_million_yen": 100.00,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 7.4,
+        "1LDK_2K_2DK": 8.9,
+        "2LDK_3K_3DK": 14.1,
+        "3LDK_4K_plus": 21.1
+      }
+    },
+    {
+      "ward_ja": "北区",
+      "ward_en": "Kita",
+      "population": 367432,
+      "households": 216145,
+      "area_km2": 20.61,
+      "pop_density_per_km2": 17828,
+      "land_prices": {
+        "overall_avg_yen_m2": 1067333,
+        "residential_yen_m2": 742000,
+        "commercial_yen_m2": 1505826,
+        "yoy_change_pct": 13.49
+      },
+      "resale_condo_70m2_million_yen": 61.80,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 7.0,
+        "1LDK_2K_2DK": 8.5,
+        "2LDK_3K_3DK": 12.5,
+        "3LDK_4K_plus": 18.1
+      }
+    },
+    {
+      "ward_ja": "荒川区",
+      "ward_en": "Arakawa",
+      "population": 224784,
+      "households": 128146,
+      "area_km2": 10.16,
+      "pop_density_per_km2": 22124,
+      "land_prices": {
+        "overall_avg_yen_m2": 984892,
+        "residential_yen_m2": 718687,
+        "commercial_yen_m2": 1339833,
+        "yoy_change_pct": 13.77
+      },
+      "resale_condo_70m2_million_yen": 60.21,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 7.4,
+        "1LDK_2K_2DK": 8.5,
+        "2LDK_3K_3DK": 12.4,
+        "3LDK_4K_plus": 18.8
+      }
+    },
+    {
+      "ward_ja": "板橋区",
+      "ward_en": "Itabashi",
+      "population": 583528,
+      "households": 340146,
+      "area_km2": 32.22,
+      "pop_density_per_km2": 18111,
+      "land_prices": {
+        "overall_avg_yen_m2": 668159,
+        "residential_yen_m2": 553553,
+        "commercial_yen_m2": 998789,
+        "yoy_change_pct": 9.71
+      },
+      "resale_condo_70m2_million_yen": 51.22,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 6.7,
+        "1LDK_2K_2DK": 7.9,
+        "2LDK_3K_3DK": 11.1,
+        "3LDK_4K_plus": 15.1
+      }
+    },
+    {
+      "ward_ja": "練馬区",
+      "ward_en": "Nerima",
+      "population": 750559,
+      "households": 400678,
+      "area_km2": 48.08,
+      "pop_density_per_km2": 15611,
+      "land_prices": {
+        "overall_avg_yen_m2": 567453,
+        "residential_yen_m2": 480544,
+        "commercial_yen_m2": 1002000,
+        "yoy_change_pct": 6.68
+      },
+      "resale_condo_70m2_million_yen": 51.15,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 6.5,
+        "1LDK_2K_2DK": 7.7,
+        "2LDK_3K_3DK": 11.2,
+        "3LDK_4K_plus": 13.2
+      }
+    },
+    {
+      "ward_ja": "足立区",
+      "ward_en": "Adachi",
+      "population": 703369,
+      "households": 386004,
+      "area_km2": 53.25,
+      "pop_density_per_km2": 13209,
+      "land_prices": {
+        "overall_avg_yen_m2": 535222,
+        "residential_yen_m2": 410760,
+        "commercial_yen_m2": 847281,
+        "yoy_change_pct": 7.12
+      },
+      "resale_condo_70m2_million_yen": 37.87,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 6.6,
+        "1LDK_2K_2DK": 7.5,
+        "2LDK_3K_3DK": 9.2,
+        "3LDK_4K_plus": 12.9
+      }
+    },
+    {
+      "ward_ja": "葛飾区",
+      "ward_en": "Katsushika",
+      "population": 472558,
+      "households": 256910,
+      "area_km2": 34.80,
+      "pop_density_per_km2": 13579,
+      "land_prices": {
+        "overall_avg_yen_m2": 487841,
+        "residential_yen_m2": 387545,
+        "commercial_yen_m2": 720105,
+        "yoy_change_pct": 7.28
+      },
+      "resale_condo_70m2_million_yen": 43.63,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 6.0,
+        "1LDK_2K_2DK": 7.5,
+        "2LDK_3K_3DK": 8.7,
+        "3LDK_4K_plus": 12.0
+      }
+    },
+    {
+      "ward_ja": "江戸川区",
+      "ward_en": "Edogawa",
+      "population": 697414,
+      "households": 365465,
+      "area_km2": 49.90,
+      "pop_density_per_km2": 13976,
+      "land_prices": {
+        "overall_avg_yen_m2": 514707,
+        "residential_yen_m2": 441115,
+        "commercial_yen_m2": 857437,
+        "yoy_change_pct": 6.31
+      },
+      "resale_condo_70m2_million_yen": 51.54,
+      "monthly_rent_man_yen": {
+        "1R_1K_1DK": 6.0,
+        "1LDK_2K_2DK": 7.3,
+        "2LDK_3K_3DK": 9.4,
+        "3LDK_4K_plus": 12.7
+      }
+    }
+  ]
+}
