@@ -194,9 +194,9 @@ function initRealEstateViz() {
      ============================================================ */
   function renderBisChart(container, bis) {
     container.append("h3").attr("class", "section-title").style("margin-top", "1rem")
-      .text("The Bubble and Beyond");
+      .text("The Bubble and Beyond — 70 Years of Property Prices");
     container.append("p").attr("class", "section-subtitle")
-      .text("BIS Residential Property Price Index, 1955-2025 (2010 = 100)");
+      .html('<a href="https://fred.stlouisfed.org/series/QJPN628BIS" style="color:var(--accent-a)">BIS/FRED Residential Property Price Index</a>, quarterly 1955–2025 (2010 = 100)');
 
     // Stats
     const peak = bis.reduce((a, b) => b.index > a.index ? b : a);
@@ -329,9 +329,9 @@ function initRealEstateViz() {
      ============================================================ */
   function renderMlitChart(container, mlit) {
     container.append("h3").attr("class", "section-title").style("margin-top", "2.5rem")
-      .text("Property Types Diverge");
+      .text("Property Types Diverge — Condos vs Land");
     container.append("p").attr("class", "section-subtitle")
-      .text("MLIT Residential Property Price Index, 2008-2025 (2010 = 100) — condos doubled while land barely moved");
+      .html('<a href="https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html" style="color:var(--accent-a)">MLIT 不動産価格指数</a>, monthly 2008–2025 (seasonally adjusted, 2010 = 100)');
 
     const series = [
       { key: "condo", label: "Condos (マンション)", color: "#c84a4a" },
@@ -463,9 +463,9 @@ function initRealEstateViz() {
      ============================================================ */
   function renderLandPriceMap(container, landPrices, basePath) {
     container.append("h3").attr("class", "section-title").style("margin-top", "2.5rem")
-      .text("Land Prices by Prefecture");
+      .text("Official Land Prices by Prefecture (公示地価)");
     container.append("p").attr("class", "section-subtitle")
-      .text("Residential land price per m², 2026 — color by price, with bubble-era comparison");
+      .html('Residential land assessed value per m², <a href="https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000081.html" style="color:var(--accent-a)">MLIT 2026</a> — hover for 1990 bubble-peak comparison');
 
     const layout = container.append("div").attr("class", "map-layout");
     const mapCol = layout.append("div");
@@ -568,9 +568,11 @@ function initRealEstateViz() {
      ============================================================ */
   function renderRentChart(container, rent) {
     container.append("h3").attr("class", "section-title").style("margin-top", "2.5rem")
-      .text("Rents by Prefecture");
+      .text("Average Monthly Rent by Prefecture (2023)");
     container.append("p").attr("class", "section-subtitle")
-      .text("Average monthly rent, 2023 — blue above national average, red below");
+      .html('Census average across <em>all</em> rental tenancies — blue above national average, red below');
+    container.append("div").attr("class", "data-note").style("margin-bottom", "1rem")
+      .html(`<strong>What this measures:</strong> Average contract rent across all occupied rental dwellings per the <a href="https://www.stat.go.jp/data/jyutaku/2023/tyousake.html" style="color:var(--accent-a)">2023 Housing and Land Survey (住宅・土地統計調査)</a>. This includes public housing (avg ¥25k/mo), employer-provided housing (avg ¥38k/mo), and decades-old tenancies at below-market rates. Market asking rents for new leases are significantly higher — see the Tokyo ward breakdown below for current listing-based data.`);
 
     const natAvg = 59656;
     const sorted = [...rent].sort((a, b) => b.rent - a.rent);
@@ -631,9 +633,9 @@ function initRealEstateViz() {
      ============================================================ */
   function renderAkiyaChart(container, housing) {
     container.append("h3").attr("class", "section-title").style("margin-top", "2.5rem")
-      .text("The Akiya Crisis");
+      .text("The Akiya (空き家) Crisis — 9 Million Empty Houses");
     container.append("p").attr("class", "section-subtitle")
-      .text("Vacancy rate vs homeownership rate by prefecture — high ownership + high vacancy = rural depopulation");
+      .html('Vacancy rate vs homeownership rate by prefecture — <a href="https://www.stat.go.jp/data/jyutaku/2023/tyousake.html" style="color:var(--accent-a)">2023 Housing and Land Survey (住宅・土地統計調査)</a>');
 
     // Stats
     const statRow = container.append("div").attr("class", "stat-row");
@@ -764,9 +766,11 @@ function initRealEstateViz() {
      ============================================================ */
   function renderWardChart(container, wards) {
     container.append("h3").attr("class", "section-title").style("margin-top", "2.5rem")
-      .text("Tokyo 23 Wards Deep Dive");
+      .text("Tokyo 23 Wards — Land Prices, Rents & Condos");
     container.append("p").attr("class", "section-subtitle")
-      .text("Residential land prices, rents, and condo values by ward — from Chiyoda to Adachi");
+      .html('Ward-level data from official land price surveys and market listing platforms');
+    container.append("div").attr("class", "data-note").style("margin-bottom", "1rem")
+      .html(`<strong>Sources:</strong> Land prices from <a href="https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000081.html" style="color:var(--accent-a)">MLIT 公示地価 2026</a> (official assessed values, not transaction prices). Resale condo prices from <a href="https://www.homes.co.jp/mansion/chuko/tokyo/23ku-mcity/city/price/" style="color:var(--accent-a)">LIFULL HOME&apos;S</a> (April 2026 listings, 70m² equivalent). Rents from <a href="https://suumo.jp/chintai/soba/tokyo/" style="color:var(--accent-a)">SUUMO</a> market asking rents (April 2026) — these are listing prices, not contracted rents, and skew above census averages.`);
 
     const sorted = [...wards].sort((a, b) => b.residentialPrice - a.residentialPrice);
 
@@ -825,9 +829,28 @@ function initRealEstateViz() {
     drawWardBars();
     updateCallbacks.push(drawWardBars);
 
+    // Ward summary stat cards
+    const wardStats = container.append("div").attr("class", "stat-row").style("margin-top", "1.5rem");
+    function drawWardStats() {
+      wardStats.selectAll("*").remove();
+      const cheapest = sorted[sorted.length - 1];
+      const priciest = sorted[0];
+      [{label: "Priciest ward (residential)", val: priciest.en + ": " + fmtPrice(priciest.residentialPrice) + "/m²"},
+       {label: "Cheapest ward", val: cheapest.en + ": " + fmtPrice(cheapest.residentialPrice) + "/m²"},
+       {label: "Price gap", val: (priciest.residentialPrice / cheapest.residentialPrice).toFixed(1) + "× range"},
+       {label: "Avg 1R rent range", val: fmtRent(sorted[sorted.length-1].rent1R * 10000) + " – " + fmtRent(sorted[0].rent1R * 10000) + "/mo"},
+      ].forEach(s => {
+        const c = wardStats.append("div").attr("class", "stat-card");
+        c.append("div").attr("class", "stat-label").text(s.label);
+        c.append("div").attr("class", "stat-value").style("font-size", "1.2rem").text(s.val);
+      });
+    }
+    drawWardStats();
+    updateCallbacks.push(drawWardStats);
+
     // Small multiples: rent by room type
     container.append("h4").attr("class", "section-subtitle").style("margin-top", "1.5rem").style("font-weight", "500")
-      .text("Rent by Room Type Across 23 Wards (万円/month)");
+      .html('Market Asking Rents by Ward & Room Type — <a href="https://suumo.jp/chintai/soba/tokyo/" style="color:var(--accent-a)">SUUMO</a> listing data, April 2026');
 
     const rentGrid = container.append("div")
       .style("display", "grid")
