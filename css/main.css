@@ -1,0 +1,427 @@
+/* === Design Tokens === */
+:root {
+  --bg:        #0d0f14;
+  --surface:   #161a22;
+  --border:    #252b38;
+  --text:      #d4cfc8;
+  --muted:     #6b7280;
+  --accent-a:  #e8a04a;
+  --accent-b:  #4a9ec8;
+  --accent-c:  #c84a4a;
+  --mono:      "JetBrains Mono", "Fira Code", monospace;
+  --serif:     "Lora", "Georgia", serif;
+  --sans:      "Inter", system-ui, sans-serif;
+}
+
+/* === Reset === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* === Typography === */
+.section-title {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+.section-subtitle {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+.chart-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  fill: var(--muted);
+  color: var(--muted);
+}
+.source-attr {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-style: italic;
+  color: var(--muted);
+  margin-top: 1rem;
+}
+.body-copy {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  max-width: 60ch;
+  color: var(--text);
+}
+
+/* === Navigation === */
+.section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.section-nav a {
+  display: block;
+  padding: 0.75rem 1.25rem;
+  color: var(--muted);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.section-nav a:hover {
+  color: var(--text);
+}
+.section-nav a.active {
+  color: var(--accent-a);
+  border-bottom-color: var(--accent-a);
+}
+
+/* === Sections === */
+.section {
+  min-height: 100vh;
+  padding: 3rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.section-header {
+  margin-bottom: 2rem;
+}
+
+/* === Stat Counters === */
+.stat-row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem 1.5rem;
+  min-width: 200px;
+}
+.stat-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stat-value {
+  font-family: var(--mono);
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--text);
+  margin-top: 0.25rem;
+}
+
+/* === Chart Containers === */
+.chart-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+.chart-container svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* === Tooltips === */
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text);
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.15s;
+  max-width: 280px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.tooltip.visible { opacity: 1; }
+.tooltip-title {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--accent-a);
+}
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.tooltip-row .label { color: var(--muted); }
+
+/* === Buttons === */
+.btn {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn:hover {
+  border-color: var(--accent-a);
+  color: var(--accent-a);
+}
+.btn.active {
+  background: var(--accent-a);
+  color: var(--bg);
+  border-color: var(--accent-a);
+}
+
+/* === Legend === */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.legend-item.dimmed { opacity: 0.3; }
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* === Sidebar (Section 2) === */
+.map-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 1.5rem;
+}
+.sidebar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.sidebar h3 {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent-a);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+.sidebar-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+.sidebar-item:hover {
+  background: rgba(232,160,74,0.1);
+}
+.sidebar-item .density {
+  color: var(--muted);
+}
+
+/* === Data Note Panel === */
+.data-note {
+  background: var(--surface);
+  border-left: 3px solid var(--accent-a);
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.data-note strong {
+  color: var(--text);
+}
+
+/* === Annotations === */
+.annotation-line {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3,3;
+}
+.annotation-label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  fill: var(--muted);
+}
+.annotation-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+  position: absolute;
+  max-width: 180px;
+}
+
+/* === Small Multiples === */
+.small-multiples {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.small-multiple {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+.small-multiple .title {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--accent-a);
+  margin-bottom: 0.5rem;
+}
+
+/* === Callout === */
+.callout {
+  background: var(--surface);
+  border: 1px solid var(--accent-c);
+  border-radius: 4px;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+.callout .big-stat {
+  font-family: var(--mono);
+  font-size: 1.4rem;
+  color: var(--accent-c);
+}
+.callout .context {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
+/* === Footer === */
+.site-footer {
+  padding: 2rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+/* === Gradient Legend Bar === */
+.gradient-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.gradient-bar {
+  height: 12px;
+  flex: 1;
+  border-radius: 2px;
+}
+.gradient-legend .label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .section {
+    padding: 2rem 1rem;
+    min-height: auto;
+  }
+  .stat-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .stat-card {
+    min-width: auto;
+  }
+  .map-layout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    max-height: none;
+  }
+  .small-multiples {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stat-value {
+    font-size: 1.4rem;
+  }
+  .section-nav {
+    padding: 0 0.5rem;
+  }
+  .section-nav a {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .small-multiples {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === D3 Axis Styling === */
+.axis path, .axis line {
+  stroke: var(--border);
+}
+.axis text {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  fill: var(--muted);
+}
+.grid line {
+  stroke: var(--border);
+  stroke-opacity: 0.3;
+}
+.grid path {
+  stroke: none;
+}

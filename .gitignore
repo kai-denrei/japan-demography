@@ -1,0 +1,9 @@
+.DS_Store
+data/crime/R06_*.xlsx
+data/crime/tokyo/
+data/crime/osaka/
+data/crime/saitama/
+data/economy/soukatu*.xlsx
+data/tourism/jnto_visitors.xlsx
+data/tourism/jta_*.xlsx
+data/economy/SOURCES.md
