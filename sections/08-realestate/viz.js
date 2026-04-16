@@ -96,7 +96,8 @@ function initRealEstateViz() {
     d3.csv(basePath + "data/realestate/okushan_trend.csv"),
     d3.csv(basePath + "data/realestate/minato_microarea.csv"),
     d3.csv(basePath + "data/realestate/listings_database.csv"),
-  ]).then(([bisRaw, mlitRaw, landRaw, rentRaw, housingRaw, wardRaw, luxuryRaw, okushanRaw, minatoRaw, listingsRaw]) => {
+    d3.csv(basePath + "data/economy/mortgage_rates.csv"),
+  ]).then(([bisRaw, mlitRaw, landRaw, rentRaw, housingRaw, wardRaw, luxuryRaw, okushanRaw, minatoRaw, listingsRaw, mortgageRaw]) => {
 
     // Parse BIS
     const bis = bisRaw.map(d => ({
@@ -152,9 +153,23 @@ function initRealEstateViz() {
     const okushan = okushanRaw.map(d => ({ year: +d.year, units: +d.units_sold_greater_tokyo, share: d.share_23ward_new_pct ? +d.share_23ward_new_pct : null }));
     const minato = minatoRaw.map(d => ({ en: d.area_en, jp: d.area_jp, price: +d.price_per_sqm_jpy, yoy: +d.yoy_pct, type: d.type }));
 
+    // Parse mortgage rates
+    const mortgage = mortgageRaw.map(d => ({
+      date: new Date(+d.year, +d.month - 1, 1),
+      year: +d.year, month: +d.month,
+      flat35min: d.flat35_min ? +d.flat35_min : null,
+      flat35max: d.flat35_max ? +d.flat35_max : null,
+      varBase: d.variable_base ? +d.variable_base : null,
+      varEffMin: d.variable_effective_min ? +d.variable_effective_min : null,
+      varEffMax: d.variable_effective_max ? +d.variable_effective_max : null,
+      prime: d.short_term_prime ? +d.short_term_prime : null,
+      event: d.event || null,
+    })).filter(d => d.year >= 2000);
+
     renderCurrencyToggle(container);
     renderBisChart(container, bis);
     renderMlitChart(container, mlit);
+    renderMortgageChart(container, mortgage);
     renderLandPriceMap(container, landPrices, basePath);
     renderRentChart(container, rent);
     renderAkiyaChart(container, housing);
@@ -472,6 +487,139 @@ function initRealEstateViz() {
   /* ============================================================
      Chart 3: Land Prices by Prefecture — Choropleth
      ============================================================ */
+  /* ============================================================
+     Chart 3: Mortgage Rates — FLAT 35 & Variable (2000–2026)
+     ============================================================ */
+  function renderMortgageChart(container, data) {
+    container.append("h3").attr("class", "section-title").style("margin-top", "2.5rem")
+      .text("Mortgage Rates — FLAT 35 vs Variable (2000–2026)");
+    container.append("p").attr("class", "section-subtitle")
+      .html('35-year fixed (<a href="https://www.flat35.com/loan/kinri/kinri_hensui.html" style="color:var(--accent-a)">FLAT 35</a>) and variable rate (<a href="https://www.boj.or.jp/statistics/dl/loan/prime/index.htm" style="color:var(--accent-a)">BOJ short-term prime</a> based) — range across lenders');
+
+    // Stats
+    const latest = data[data.length - 1];
+    const flat35Data = data.filter(d => d.flat35min != null);
+    const flat35Low = flat35Data.reduce((a, b) => (b.flat35min < a.flat35min) ? b : a);
+    const varEffData = data.filter(d => d.varEffMin != null && d.varEffMin > 0);
+    const varLow = varEffData.reduce((a, b) => (b.varEffMin < a.varEffMin) ? b : a);
+
+    const statRow = container.append("div").attr("class", "stat-row");
+    [{label: "FLAT 35 current (Apr 2026)", val: latest.flat35min ? latest.flat35min.toFixed(2) + "–" + latest.flat35max.toFixed(2) + "%" : "—"},
+     {label: "FLAT 35 all-time low", val: flat35Low.flat35min.toFixed(2) + "% (" + flat35Low.year + "/" + flat35Low.month + ")"},
+     {label: "Variable effective current", val: latest.varEffMin ? latest.varEffMin.toFixed(3) + "%" : "—"},
+     {label: "Variable effective low", val: varLow.varEffMin.toFixed(3) + "% (" + varLow.year + ")"},
+    ].forEach(s => {
+      const c = statRow.append("div").attr("class", "stat-card");
+      c.append("div").attr("class", "stat-label").text(s.label);
+      c.append("div").attr("class", "stat-value").style("font-size", "1.2rem").text(s.val);
+    });
+
+    const chartBox = container.append("div").attr("class", "chart-container");
+    const dims = getChartDimensions(chartBox.node(), 0.5);
+    const margin = { top: 25, right: 30, bottom: 35, left: 50 };
+    const w = dims.width - margin.left - margin.right;
+    const h = dims.height - margin.top - margin.bottom;
+
+    const svg = chartBox.append("svg")
+      .attr("viewBox", `0 0 ${dims.width} ${dims.height}`)
+      .attr("preserveAspectRatio", "xMidYMid meet");
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleTime().domain(d3.extent(data, d => d.date)).range([0, w]);
+    const y = d3.scaleLinear().domain([0, 5.5]).range([h, 0]);
+
+    g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(6).tickSize(-w).tickFormat(""));
+    g.append("g").attr("class", "axis").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(12));
+    g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(6).tickFormat(d => d.toFixed(1) + "%"));
+
+    // FLAT 35 range band (min to max)
+    const flat35 = data.filter(d => d.flat35min != null);
+    const flat35Area = d3.area()
+      .x(d => x(d.date)).y0(d => y(d.flat35min)).y1(d => y(d.flat35max))
+      .curve(d3.curveMonotoneX);
+    g.append("path").datum(flat35).attr("d", flat35Area)
+      .attr("fill", "#c84a4a").attr("opacity", 0.2);
+
+    // FLAT 35 min line
+    const flat35Line = d3.line().x(d => x(d.date)).y(d => y(d.flat35min)).curve(d3.curveMonotoneX);
+    g.append("path").datum(flat35).attr("d", flat35Line)
+      .attr("fill", "none").attr("stroke", "#c84a4a").attr("stroke-width", 2);
+
+    // FLAT 35 max line (dashed)
+    const flat35MaxLine = d3.line().x(d => x(d.date)).y(d => y(d.flat35max)).curve(d3.curveMonotoneX);
+    g.append("path").datum(flat35).attr("d", flat35MaxLine)
+      .attr("fill", "none").attr("stroke", "#c84a4a").attr("stroke-width", 1).attr("stroke-dasharray", "3,3");
+
+    // Variable base rate
+    const varBase = data.filter(d => d.varBase != null);
+    const varBaseLine = d3.line().x(d => x(d.date)).y(d => y(d.varBase)).defined(d => d.varBase != null).curve(d3.curveStepAfter);
+    g.append("path").datum(varBase).attr("d", varBaseLine)
+      .attr("fill", "none").attr("stroke", "#6b7280").attr("stroke-width", 1.5).attr("stroke-dasharray", "6,3");
+
+    // Variable effective rate
+    const varEff = data.filter(d => d.varEffMin != null);
+    const varEffLine = d3.line().x(d => x(d.date)).y(d => y(d.varEffMin)).defined(d => d.varEffMin != null).curve(d3.curveMonotoneX);
+    g.append("path").datum(varEff).attr("d", varEffLine)
+      .attr("fill", "none").attr("stroke", "#4a9ec8").attr("stroke-width", 2.5);
+
+    // Short-term prime rate
+    const prime = data.filter(d => d.prime != null);
+    const primeLine = d3.line().x(d => x(d.date)).y(d => y(d.prime)).defined(d => d.prime != null).curve(d3.curveStepAfter);
+    g.append("path").datum(prime).attr("d", primeLine)
+      .attr("fill", "none").attr("stroke", "#e8a04a").attr("stroke-width", 1.5).attr("stroke-dasharray", "2,2");
+
+    // Event annotations
+    const events = data.filter(d => d.event);
+    events.forEach((d, i) => {
+      const ex = x(d.date);
+      if (ex < 0 || ex > w) return;
+      g.append("line").attr("x1", ex).attr("x2", ex).attr("y1", 0).attr("y2", h)
+        .attr("stroke", "var(--border)").attr("stroke-width", 0.5).attr("stroke-dasharray", "2,4");
+    });
+
+    // Hover
+    const tip = createTooltip();
+    const hoverLine = g.append("line").attr("stroke", "var(--muted)").attr("stroke-width", 1).attr("y1", 0).attr("y2", h).style("opacity", 0);
+    const bisect = d3.bisector(d => d.date).left;
+
+    svg.append("rect").attr("transform", `translate(${margin.left},${margin.top})`).attr("width", w).attr("height", h).attr("fill", "transparent")
+      .on("mousemove", function(event) {
+        const [mx] = d3.pointer(event, this);
+        const date = x.invert(mx);
+        const idx = bisect(data, date, 1);
+        const d0 = data[idx - 1], d1 = data[idx] || d0;
+        const d = date - d0.date > (d1 ? d1.date - date : Infinity) ? (d1 || d0) : d0;
+        hoverLine.attr("x1", x(d.date)).attr("x2", x(d.date)).style("opacity", 1);
+
+        let html = `<div class="tooltip-title">${d.year}/${String(d.month).padStart(2, "0")}</div>`;
+        if (d.flat35min != null) html += `<div class="tooltip-row"><span class="label" style="color:#c84a4a">FLAT 35</span><span>${d.flat35min.toFixed(2)}–${d.flat35max.toFixed(2)}%</span></div>`;
+        if (d.varBase != null) html += `<div class="tooltip-row"><span class="label" style="color:#6b7280">Variable (base)</span><span>${d.varBase.toFixed(3)}%</span></div>`;
+        if (d.varEffMin != null) html += `<div class="tooltip-row"><span class="label" style="color:#4a9ec8">Variable (effective)</span><span>${d.varEffMin.toFixed(3)}%</span></div>`;
+        if (d.prime != null) html += `<div class="tooltip-row"><span class="label" style="color:#e8a04a">Short-term prime</span><span>${d.prime.toFixed(3)}%</span></div>`;
+        if (d.event) html += `<div class="tooltip-row"><span class="label" style="color:var(--text)">${d.event}</span></div>`;
+        tip.show(html, event);
+      })
+      .on("mouseleave", () => { hoverLine.style("opacity", 0); tip.hide(); });
+
+    // Legend
+    const legend = chartBox.append("div").attr("class", "legend");
+    [
+      { c: "#c84a4a", l: "FLAT 35 min–max range (fixed 35yr)", solid: true },
+      { c: "#4a9ec8", l: "Variable effective rate (after discount)", solid: true },
+      { c: "#6b7280", l: "Variable base rate (posted)", dashed: true },
+      { c: "#e8a04a", l: "Short-term prime rate (BOJ)", dashed: true },
+    ].forEach(d => {
+      const it = legend.append("div").attr("class", "legend-item");
+      it.append("div").attr("class", "legend-swatch")
+        .style("background", d.dashed ? "transparent" : d.c)
+        .style("border", d.dashed ? `2px dashed ${d.c}` : "none");
+      it.append("span").text(d.l);
+    });
+
+    chartBox.append("div").attr("class", "data-note")
+      .html(`<strong>Key context:</strong> ~70-75% of Japanese mortgage borrowers choose variable rate. The variable base rate was frozen at 2.475% for 15 years (2009–2024) while banks competed on discounts, pushing effective rates to 0.3–0.4%. BOJ ended negative rates in March 2024 and raised to 0.5% by January 2025, triggering the first variable rate increases since 2007. FLAT 35's Oct 2017 jump reflects inclusion of group life insurance (団信) in the posted rate, not an actual cost increase. Sources: <a href="https://www.flat35.com/loan/kinri/kinri_hensui.html" style="color:var(--accent-a)">JHF/FLAT 35</a>, <a href="https://www.boj.or.jp/statistics/dl/loan/prime/index.htm" style="color:var(--accent-a)">BOJ prime rate</a>, <a href="https://diamond-fudosan.jp/articles/-/127188" style="color:var(--accent-a)">Diamond Fudosan</a>.`);
+  }
+
   function renderLandPriceMap(container, landPrices, basePath) {
     container.append("h3").attr("class", "section-title").style("margin-top", "2.5rem")
       .text("Official Land Prices by Prefecture (公示地価)");
