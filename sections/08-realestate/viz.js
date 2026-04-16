@@ -95,7 +95,8 @@ function initRealEstateViz() {
     d3.csv(basePath + "data/realestate/tokyo_luxury.csv"),
     d3.csv(basePath + "data/realestate/okushan_trend.csv"),
     d3.csv(basePath + "data/realestate/minato_microarea.csv"),
-  ]).then(([bisRaw, mlitRaw, landRaw, rentRaw, housingRaw, wardRaw, luxuryRaw, okushanRaw, minatoRaw]) => {
+    d3.csv(basePath + "data/realestate/listings_database.csv"),
+  ]).then(([bisRaw, mlitRaw, landRaw, rentRaw, housingRaw, wardRaw, luxuryRaw, okushanRaw, minatoRaw, listingsRaw]) => {
 
     // Parse BIS
     const bis = bisRaw.map(d => ({
@@ -159,6 +160,7 @@ function initRealEstateViz() {
     renderAkiyaChart(container, housing);
     renderWardChart(container, wards);
     renderLuxurySection(container, luxury, okushan, minato);
+    renderListings(container, listingsRaw);
     renderSources(container);
   });
 
@@ -1112,6 +1114,145 @@ function initRealEstateViz() {
       .html(`<div class="big-stat">20-40%</div>
         <div class="context">Share of premium ward (Chiyoda, Minato, Shibuya) new condo sales going to foreign buyers — primarily from Greater China, Singapore, and Hong Kong. The weak yen (¥150+/USD) has made Tokyo luxury a perceived bargain vs. Hong Kong, Singapore, and New York.</div>
         <div class="context" style="margin-top:0.5rem;font-size:0.65rem;font-style:italic">Sources: <a href="https://www.japantimes.co.jp/news/2025/11/26/japan/foreign-condo-buyers-survey/" style="color:var(--accent-a)">Japan Times / Mitsubishi UFJ Trust survey</a></div>`);
+  }
+
+  /* ============================================================
+     Chart 8: Real Listings — What You Actually Get
+     ============================================================ */
+  function renderListings(container, raw) {
+    container.append("div").style("border-top", "2px solid var(--accent-b)").style("margin-top", "3rem").style("padding-top", "2rem");
+
+    container.append("h3").attr("class", "section-title")
+      .text("What Does Your Money Buy? — Real Listings");
+    container.append("p").attr("class", "section-subtitle")
+      .html('Actual properties on the market or government-assessed values, scraped from <a href="https://www.realestate.co.jp/en/forsale/" style="color:var(--accent-a)">Real Estate Japan</a> and <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-L01-v3_1.html" style="color:var(--accent-a)">MLIT 公示地価 L01</a>');
+
+    container.append("div").attr("class", "data-note").style("margin-bottom", "1rem")
+      .html(`<strong>This is a living database.</strong> New listings are appended over time to build a concrete picture of what properties actually cost — not just averages. Asking prices may differ from transaction prices by 5-10%. Government-assessed values (公示地価) are land-only; actual property prices depend on the building. Data as of April 2026.`);
+
+    const listings = raw.filter(d => d.price_jpy && +d.price_jpy > 0).map(d => ({
+      id: d.id,
+      source: d.source,
+      url: d.source_url,
+      type: d.listing_type,
+      propType: d.property_type,
+      ward: d.ward_or_city,
+      neighborhood: d.neighborhood,
+      station: d.nearest_station,
+      walk: d.walk_min ? +d.walk_min : null,
+      price: +d.price_jpy,
+      size: d.size_sqm ? +d.size_sqm : null,
+      land: d.land_sqm ? +d.land_sqm : null,
+      plan: d.floor_plan,
+      floor: d.floor,
+      totalFloors: d.total_floors,
+      year: d.building_year ? +d.building_year : null,
+      structure: d.structure,
+      perSqm: d.price_per_sqm ? +d.price_per_sqm : (d.size_sqm && +d.size_sqm > 0 ? +d.price_jpy / +d.size_sqm : null),
+      building: d.building_name,
+      notes: d.notes,
+    })).sort((a, b) => a.price - b.price);
+
+    const tip = createTooltip();
+
+    // Dot plot: price on log X axis, each listing is a dot, colored by property type
+    const chartBox = container.append("div").attr("class", "chart-container");
+
+    function drawListings() {
+      chartBox.selectAll("*").remove();
+
+      const margin = { top: 30, right: 30, bottom: 40, left: 30 };
+      const chartW = Math.min(900, chartBox.node().getBoundingClientRect().width);
+      const rowH = 28;
+      const chartH = listings.length * rowH + margin.top + margin.bottom;
+      const w = chartW - margin.left - margin.right;
+
+      const svg = chartBox.append("svg").attr("viewBox", `0 0 ${chartW} ${chartH}`).attr("preserveAspectRatio", "xMidYMid meet");
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLog().domain([convert(10e6), convert(6e9)]).range([0, w]).clamp(true);
+
+      // Price axis at top
+      const tickVals = [10e6, 30e6, 50e6, 100e6, 200e6, 500e6, 1e9, 3e9, 6e9];
+      g.append("g").attr("class", "axis").call(
+        d3.axisTop(x).tickValues(tickVals.map(v => convert(v))).tickFormat(v => {
+          const jpy = FX.currency === "JPY" ? v : v / (FX.currency === "USD" ? FX.usd : FX.eur);
+          if (FX.currency === "JPY") {
+            if (jpy >= 1e9) return "¥" + (jpy / 1e9).toFixed(0) + "B";
+            return "¥" + (jpy / 1e6).toFixed(0) + "M";
+          }
+          if (v >= 1e6) return symbol() + (v / 1e6).toFixed(0) + "M";
+          if (v >= 1e3) return symbol() + (v / 1e3).toFixed(0) + "K";
+          return symbol() + v.toFixed(0);
+        })
+      );
+
+      // Grid lines
+      g.append("g").attr("class", "grid").call(
+        d3.axisTop(x).tickValues(tickVals.map(v => convert(v))).tickSize(-(chartH - margin.top - margin.bottom)).tickFormat("")
+      );
+
+      const typeColors = {
+        used_condo: "#4a9ec8", condo: "#4a9ec8",
+        used_house: "#4ac87a", house: "#4ac87a",
+        government_assessed: "#e8a04a",
+      };
+      const typeLabels = {
+        used_condo: "Condo (resale)", condo: "Condo (assessed land)",
+        used_house: "House", house: "House (assessed land)",
+        government_assessed: "Land (assessed)",
+      };
+
+      // Each listing as a row
+      listings.forEach((d, i) => {
+        const cy = i * rowH + rowH / 2;
+        const cx = x(convert(d.price));
+
+        // Dot
+        g.append("circle")
+          .attr("cx", cx).attr("cy", cy).attr("r", 6)
+          .attr("fill", typeColors[d.propType] || "#6b7280")
+          .attr("opacity", 0.85)
+          .attr("stroke", "var(--bg)").attr("stroke-width", 1)
+          .on("mouseover", function(event) {
+            d3.select(this).attr("r", 9).attr("opacity", 1);
+            let html = `<div class="tooltip-title">${d.ward}${d.neighborhood ? " · " + d.neighborhood : ""}</div>`;
+            html += `<div class="tooltip-row"><span class="label">Price</span><span>${fmtMoney(d.price)}</span></div>`;
+            if (d.size) html += `<div class="tooltip-row"><span class="label">Size</span><span>${d.size}m²</span></div>`;
+            if (d.land) html += `<div class="tooltip-row"><span class="label">Land</span><span>${d.land}m²</span></div>`;
+            if (d.plan) html += `<div class="tooltip-row"><span class="label">Layout</span><span>${d.plan}</span></div>`;
+            if (d.perSqm) html += `<div class="tooltip-row"><span class="label">Price/m²</span><span>${fmtPrice(d.perSqm)}</span></div>`;
+            if (d.year) html += `<div class="tooltip-row"><span class="label">Built</span><span>${d.year}</span></div>`;
+            if (d.station) html += `<div class="tooltip-row"><span class="label">Station</span><span>${d.station}${d.walk ? " " + d.walk + "min" : ""}</span></div>`;
+            html += `<div class="tooltip-row"><span class="label">Type</span><span>${typeLabels[d.propType] || d.propType}</span></div>`;
+            if (d.notes) html += `<div class="tooltip-row"><span class="label" style="color:var(--muted)">${d.notes}</span></div>`;
+            tip.show(html, event);
+          })
+          .on("mousemove", e => tip.move(e))
+          .on("mouseout", function() { d3.select(this).attr("r", 6).attr("opacity", 0.85); tip.hide(); });
+
+        // Label: ward + plan + price
+        const label = `${d.ward.replace("-ku", "")} ${d.plan || d.propType.replace("used_", "")} ${d.size ? d.size + "m²" : ""}`;
+        g.append("text")
+          .attr("x", cx + 10).attr("y", cy).attr("dy", "0.35em")
+          .attr("class", "chart-label").style("font-size", "0.5rem")
+          .style("fill", typeColors[d.propType] || "var(--muted)")
+          .text(label.trim());
+      });
+    }
+    drawListings();
+    updateCallbacks.push(drawListings);
+
+    // Legend
+    const legend = chartBox.append("div").attr("class", "legend").style("margin-top", "0.75rem");
+    [{ c: "#4a9ec8", l: "Condo (asking/resale)" }, { c: "#4ac87a", l: "House" }, { c: "#e8a04a", l: "Land (government assessed)" }].forEach(d => {
+      const it = legend.append("div").attr("class", "legend-item");
+      it.append("div").attr("class", "legend-swatch").style("background", d.c);
+      it.append("span").text(d.l);
+    });
+
+    container.append("div").attr("class", "data-note").style("margin-top", "0.75rem")
+      .html(`<strong>${listings.length} listings</strong> from ${new Set(listings.map(d => d.source)).size} sources. Range: ${fmtMoney(listings[0].price)} (${listings[0].ward}) to ${fmtMoney(listings[listings.length-1].price)} (${listings[listings.length-1].ward}). Government assessed values are land-only at official survey points; asking prices are from active listings on <a href="https://www.realestate.co.jp/en/forsale/" style="color:var(--accent-a)">realestate.co.jp</a>. This database grows over time — more data points make the picture sharper.`);
   }
 
   /* === Sources === */
