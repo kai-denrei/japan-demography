@@ -92,7 +92,10 @@ function initRealEstateViz() {
     d3.csv(basePath + "data/realestate/prefecture_rent.csv"),
     d3.csv(basePath + "data/realestate/prefecture_housing.csv"),
     d3.csv(basePath + "data/economy/tokyo_23wards_real_estate.csv"),
-  ]).then(([bisRaw, mlitRaw, landRaw, rentRaw, housingRaw, wardRaw]) => {
+    d3.csv(basePath + "data/realestate/tokyo_luxury.csv"),
+    d3.csv(basePath + "data/realestate/okushan_trend.csv"),
+    d3.csv(basePath + "data/realestate/minato_microarea.csv"),
+  ]).then(([bisRaw, mlitRaw, landRaw, rentRaw, housingRaw, wardRaw, luxuryRaw, okushanRaw, minatoRaw]) => {
 
     // Parse BIS
     const bis = bisRaw.map(d => ({
@@ -143,6 +146,11 @@ function initRealEstateViz() {
       rent3LDK: +d.rent_3LDK4K_man_yen
     }));
 
+    // Parse luxury data
+    const luxury = luxuryRaw.map(d => ({ category: d.category, name: d.name, sqm: +d.price_per_sqm_jpy, total: +d.total_price_jpy, year: +d.year, type: d.type, notes: d.notes }));
+    const okushan = okushanRaw.map(d => ({ year: +d.year, units: +d.units_sold_greater_tokyo, share: d.share_23ward_new_pct ? +d.share_23ward_new_pct : null }));
+    const minato = minatoRaw.map(d => ({ en: d.area_en, jp: d.area_jp, price: +d.price_per_sqm_jpy, yoy: +d.yoy_pct, type: d.type }));
+
     renderCurrencyToggle(container);
     renderBisChart(container, bis);
     renderMlitChart(container, mlit);
@@ -150,6 +158,7 @@ function initRealEstateViz() {
     renderRentChart(container, rent);
     renderAkiyaChart(container, housing);
     renderWardChart(container, wards);
+    renderLuxurySection(container, luxury, okushan, minato);
     renderSources(container);
   });
 
@@ -901,6 +910,208 @@ function initRealEstateViz() {
     }
     drawRentGrid();
     updateCallbacks.push(drawRentGrid);
+  }
+
+  /* ============================================================
+     Chart 7: The Luxury Segment — A World of Its Own
+     ============================================================ */
+  function renderLuxurySection(container, luxury, okushan, minato) {
+    container.append("div").style("border-top", "2px solid var(--accent-c)").style("margin-top", "3rem").style("padding-top", "2rem");
+
+    container.append("h3").attr("class", "section-title")
+      .text("The Luxury Segment — A World of Its Own");
+    container.append("p").attr("class", "section-subtitle")
+      .html('Why averages are misleading: the 億ション (oku-shon) phenomenon and intra-ward price chasms');
+
+    container.append("div").attr("class", "data-note").style("margin-bottom", "1.5rem")
+      .html(`<strong>The gap between average and luxury is not a gradient — it's a cliff.</strong> A "typical" new condo in Tokyo's 23 wards averages ¥1.7M/m². Branded luxury (Park Court, Mita Garden Hills) starts at ¥3-5M/m². Trophy penthouses (Aman Residences, Marq Omotesando) reach ¥13-15M/m² — an <strong>8-9× multiplier</strong> over the average. Within a single ward like Minato-ku, land prices range 45× from cheapest to priciest survey point.`);
+
+    // --- 7A: The Price Ladder ---
+    container.append("h4").attr("class", "section-subtitle").style("margin-top", "1.5rem").style("font-weight", "500")
+      .html('Price per m² — From Average to Trophy');
+
+    const ladderBox = container.append("div").attr("class", "chart-container");
+    const tip = createTooltip();
+
+    function drawLadder() {
+      ladderBox.selectAll("*").remove();
+      const sorted = [...luxury].sort((a, b) => a.sqm - b.sqm);
+      const margin = { top: 5, right: 100, bottom: 10, left: 200 };
+      const barH = 28;
+      const chartW = Math.min(800, ladderBox.node().getBoundingClientRect().width);
+      const chartH = sorted.length * (barH + 4) + margin.top + margin.bottom;
+      const w = chartW - margin.left - margin.right;
+
+      const x = d3.scaleLog().domain([d3.min(sorted, d => d.sqm) * 0.8, d3.max(sorted, d => d.sqm) * 1.1]).range([0, w]).clamp(true);
+      const y = d3.scaleBand().domain(sorted.map(d => d.name)).range([0, chartH - margin.top - margin.bottom]).padding(0.15);
+
+      const catColors = { "23ward_avg_new": "#4a5568", "23ward_avg_resale": "#6b7280", "cbd6_avg_new": "#4a9ec8", branded_luxury: "#e8a04a", ultra_luxury: "#c84a4a", trophy_penthouse: "#9b4ac8" };
+
+      const svg = ladderBox.append("svg").attr("viewBox", `0 0 ${chartW} ${chartH}`).attr("preserveAspectRatio", "xMidYMid meet");
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      g.selectAll("rect").data(sorted).join("rect")
+        .attr("x", 0).attr("y", d => y(d.name)).attr("width", d => x(d.sqm)).attr("height", y.bandwidth())
+        .attr("fill", d => catColors[d.category] || "#e8a04a").attr("opacity", 0.8).attr("rx", 2)
+        .on("mouseover", function(event, d) {
+          d3.select(this).attr("opacity", 1);
+          let html = `<div class="tooltip-title">${d.name}</div>`;
+          html += `<div class="tooltip-row"><span class="label">Price/m²</span><span>${fmtPrice(d.sqm)}</span></div>`;
+          if (d.total) html += `<div class="tooltip-row"><span class="label">Total price</span><span>${fmtMoney(d.total)}</span></div>`;
+          const avg = luxury.find(l => l.category === "23ward_avg_new");
+          if (avg) html += `<div class="tooltip-row"><span class="label">vs 23-ward avg</span><span>${(d.sqm / avg.sqm).toFixed(1)}×</span></div>`;
+          html += `<div class="tooltip-row"><span class="label">${d.notes}</span><span>${d.year}</span></div>`;
+          tip.show(html, event);
+        })
+        .on("mousemove", e => tip.move(e))
+        .on("mouseout", function() { d3.select(this).attr("opacity", 0.8); tip.hide(); });
+
+      g.selectAll(".bar-label").data(sorted).join("text")
+        .attr("class", "chart-label").attr("x", -6).attr("y", d => y(d.name) + y.bandwidth() / 2)
+        .attr("dy", "0.35em").attr("text-anchor", "end").style("font-size", "0.55rem").text(d => d.name);
+
+      g.selectAll(".val-label").data(sorted).join("text")
+        .attr("class", "chart-label").attr("x", d => x(d.sqm) + 4)
+        .attr("y", d => y(d.name) + y.bandwidth() / 2).attr("dy", "0.35em")
+        .attr("text-anchor", "start").style("font-size", "0.5rem").style("fill", "var(--text)")
+        .text(d => fmtPrice(d.sqm) + "/m²");
+
+      // Category legend
+      const leg = ladderBox.append("div").attr("class", "legend");
+      [{ c: "#4a5568", l: "23-ward average" }, { c: "#4a9ec8", l: "CBD 6-ward avg" }, { c: "#e8a04a", l: "Branded luxury" }, { c: "#c84a4a", l: "Ultra-luxury" }, { c: "#9b4ac8", l: "Trophy penthouse" }].forEach(d => {
+        const it = leg.append("div").attr("class", "legend-item");
+        it.append("div").attr("class", "legend-swatch").style("background", d.c);
+        it.append("span").text(d.l);
+      });
+    }
+    drawLadder();
+    updateCallbacks.push(drawLadder);
+
+    // --- 7B: Oku-shon Trend ---
+    container.append("h4").attr("class", "section-subtitle").style("margin-top", "2rem").style("font-weight", "500")
+      .html('The 億ション (Oku-shon) Explosion — Condos Over ¥100M');
+
+    const statRow = container.append("div").attr("class", "stat-row");
+    [{label: "2025 oku-shon sales", val: "5,947 units"}, {label: "Share of 23-ward new condos (2024)", val: "39%"}, {label: "Growth 2013→2025", val: "3.5×"}].forEach(s => {
+      const c = statRow.append("div").attr("class", "stat-card");
+      c.append("div").attr("class", "stat-label").text(s.label);
+      c.append("div").attr("class", "stat-value").style("font-size", "1.3rem").text(s.val);
+    });
+
+    const okuBox = container.append("div").attr("class", "chart-container");
+    const dims = getChartDimensions(okuBox.node(), 0.4);
+    const margin = { top: 20, right: 30, bottom: 35, left: 55 };
+    const w = dims.width - margin.left - margin.right;
+    const h = dims.height - margin.top - margin.bottom;
+
+    const svg = okuBox.append("svg").attr("viewBox", `0 0 ${dims.width} ${dims.height}`).attr("preserveAspectRatio", "xMidYMid meet");
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleLinear().domain(d3.extent(okushan, d => d.year)).range([0, w]);
+    const y = d3.scaleLinear().domain([0, d3.max(okushan, d => d.units) * 1.1]).range([h, 0]);
+
+    g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(""));
+    g.append("g").attr("class", "axis").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(7).tickFormat(d3.format("d")));
+    g.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(5).tickFormat(d => d >= 1000 ? (d / 1000).toFixed(1) + "k" : d));
+
+    const area = d3.area().x(d => x(d.year)).y0(h).y1(d => y(d.units)).curve(d3.curveMonotoneX);
+    g.append("path").datum(okushan).attr("d", area).attr("fill", "#9b4ac8").attr("opacity", 0.2);
+    const line = d3.line().x(d => x(d.year)).y(d => y(d.units)).curve(d3.curveMonotoneX);
+    g.append("path").datum(okushan).attr("d", line).attr("fill", "none").attr("stroke", "#9b4ac8").attr("stroke-width", 2.5);
+
+    // Dots
+    g.selectAll("circle").data(okushan).join("circle")
+      .attr("cx", d => x(d.year)).attr("cy", d => y(d.units)).attr("r", 3)
+      .attr("fill", "#9b4ac8").attr("stroke", "var(--bg)").attr("stroke-width", 1);
+
+    // COVID annotation
+    const covidX = x(2020);
+    g.append("line").attr("class", "annotation-line").attr("x1", covidX).attr("x2", covidX).attr("y1", 0).attr("y2", h);
+    g.append("text").attr("class", "annotation-label").attr("x", covidX + 4).attr("y", 12).text("COVID");
+
+    const okuTip = createTooltip();
+    svg.append("rect").attr("transform", `translate(${margin.left},${margin.top})`).attr("width", w).attr("height", h).attr("fill", "transparent")
+      .on("mousemove", function(event) {
+        const [mx] = d3.pointer(event, this);
+        const yr = Math.round(x.invert(mx));
+        const d = okushan.find(r => r.year === yr);
+        if (!d) return;
+        okuTip.show(`<div class="tooltip-title">${d.year}</div>
+          <div class="tooltip-row"><span class="label">Units sold (Greater Tokyo)</span><span>${fmt.num(d.units)}</span></div>
+          ${d.share ? `<div class="tooltip-row"><span class="label">% of 23-ward new</span><span>${d.share}%</span></div>` : ''}`, event);
+      })
+      .on("mouseleave", () => okuTip.hide());
+
+    okuBox.append("p").attr("class", "source-attr")
+      .html('Source: <a href="https://www.fudousankeizai.co.jp/" style="color:var(--accent-a)">不動産経済研究所</a>; <a href="https://lifull.com/news/42239/" style="color:var(--accent-a)">LIFULL HOME\'S oku-shon analysis</a>');
+
+    // --- 7C: Minato-ku Micro-Area Price Map ---
+    container.append("h4").attr("class", "section-subtitle").style("margin-top", "2rem").style("font-weight", "500")
+      .html('Inside Minato-ku — A 34× Spread Within One Ward');
+
+    container.append("div").attr("class", "data-note").style("margin-bottom", "1rem")
+      .html(`The ward average of ¥5.5M/m² hides a range from <strong>¥900K/m²</strong> (Odaiba waterfront) to <strong>¥30.6M/m²</strong> (Kita-Aoyama, steps from Omotesando). Even excluding commercial zones, residential land ranges 4.7× within the ward. Source: <a href="https://tochidai.info/tokyo/minato/" style="color:var(--accent-a)">tochidai.info / MLIT 公示地価 2026</a>`);
+
+    const minatoBox = container.append("div").attr("class", "chart-container");
+    const minatoTip = createTooltip();
+
+    function drawMinato() {
+      minatoBox.selectAll("*").remove();
+      const sorted = [...minato].sort((a, b) => b.price - a.price);
+      const margin2 = { top: 5, right: 90, bottom: 10, left: 130 };
+      const barH2 = 20;
+      const chartW2 = Math.min(750, minatoBox.node().getBoundingClientRect().width);
+      const chartH2 = sorted.length * (barH2 + 3) + margin2.top + margin2.bottom;
+      const w2 = chartW2 - margin2.left - margin2.right;
+
+      const x2 = d3.scaleLog().domain([d3.min(sorted, d => d.price) * 0.8, d3.max(sorted, d => d.price) * 1.1]).range([0, w2]).clamp(true);
+      const y2 = d3.scaleBand().domain(sorted.map(d => d.en)).range([0, chartH2 - margin2.top - margin2.bottom]).padding(0.12);
+
+      const typeColor = { commercial: "#c84a4a", mixed: "#e8a04a", residential: "#4a9ec8", waterfront: "#4ac87a" };
+
+      const svg2 = minatoBox.append("svg").attr("viewBox", `0 0 ${chartW2} ${chartH2}`).attr("preserveAspectRatio", "xMidYMid meet");
+      const g2 = svg2.append("g").attr("transform", `translate(${margin2.left},${margin2.top})`);
+
+      g2.selectAll("rect").data(sorted).join("rect")
+        .attr("x", 0).attr("y", d => y2(d.en)).attr("width", d => x2(d.price)).attr("height", y2.bandwidth())
+        .attr("fill", d => typeColor[d.type] || "#e8a04a").attr("opacity", 0.75).attr("rx", 2)
+        .on("mouseover", function(event, d) {
+          d3.select(this).attr("opacity", 1);
+          minatoTip.show(`<div class="tooltip-title">${d.en} (${d.jp})</div>
+            <div class="tooltip-row"><span class="label">Avg price/m²</span><span>${fmtPrice(d.price)}</span></div>
+            <div class="tooltip-row"><span class="label">YoY change</span><span>+${d.yoy.toFixed(1)}%</span></div>
+            <div class="tooltip-row"><span class="label">Zone type</span><span>${d.type}</span></div>
+            <div class="tooltip-row"><span class="label">vs Odaiba</span><span>${(d.price / 900000).toFixed(1)}×</span></div>`, event);
+        })
+        .on("mousemove", e => minatoTip.move(e))
+        .on("mouseout", function() { d3.select(this).attr("opacity", 0.75); minatoTip.hide(); });
+
+      g2.selectAll(".bar-label").data(sorted).join("text")
+        .attr("class", "chart-label").attr("x", -6).attr("y", d => y2(d.en) + y2.bandwidth() / 2)
+        .attr("dy", "0.35em").attr("text-anchor", "end").style("font-size", "0.55rem").text(d => d.en);
+
+      g2.selectAll(".val-label").data(sorted).join("text")
+        .attr("class", "chart-label").attr("x", d => x2(d.price) + 4)
+        .attr("y", d => y2(d.en) + y2.bandwidth() / 2).attr("dy", "0.35em")
+        .attr("text-anchor", "start").style("font-size", "0.5rem").style("fill", "var(--text)")
+        .text(d => fmtPriceShort(d.price) + "/m²");
+
+      // Legend
+      const leg = minatoBox.append("div").attr("class", "legend");
+      [{ c: "#c84a4a", l: "Commercial" }, { c: "#e8a04a", l: "Mixed-use" }, { c: "#4a9ec8", l: "Residential" }, { c: "#4ac87a", l: "Waterfront" }].forEach(d => {
+        const it = leg.append("div").attr("class", "legend-item");
+        it.append("div").attr("class", "legend-swatch").style("background", d.c);
+        it.append("span").text(d.l);
+      });
+    }
+    drawMinato();
+    updateCallbacks.push(drawMinato);
+
+    // Foreign buyer note
+    container.append("div").attr("class", "callout").style("margin-top", "1.5rem")
+      .html(`<div class="big-stat">20-40%</div>
+        <div class="context">Share of premium ward (Chiyoda, Minato, Shibuya) new condo sales going to foreign buyers — primarily from Greater China, Singapore, and Hong Kong. The weak yen (¥150+/USD) has made Tokyo luxury a perceived bargain vs. Hong Kong, Singapore, and New York.</div>
+        <div class="context" style="margin-top:0.5rem;font-size:0.65rem;font-style:italic">Sources: <a href="https://www.japantimes.co.jp/news/2025/11/26/japan/foreign-condo-buyers-survey/" style="color:var(--accent-a)">Japan Times / Mitsubishi UFJ Trust survey</a></div>`);
   }
 
   /* === Sources === */
